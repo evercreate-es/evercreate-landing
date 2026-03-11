@@ -116,7 +116,7 @@ export function CodeEntry({ industry }: CodeEntryProps) {
           >
             <button
               onClick={() => setState('input')}
-              className="rounded-xl bg-white px-8 py-3 text-sm font-semibold text-black transition-all cursor-pointer hover:shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02]"
+              className="rounded-2xl bg-white px-10 py-4 text-base font-bold text-black transition-all cursor-pointer hover:shadow-[0_0_30px_rgba(20,184,166,0.4)] hover:scale-[1.04]"
             >
               I have a code
             </button>

@@ -81,7 +81,7 @@ export function LandingHero({ headline, subtitle, subline, industry, badge }: La
         {/* Subtitle */}
         <motion.p
           {...motionProps(2)}
-          className="max-w-2xl text-lg text-white/60 sm:text-xl"
+          className="max-w-2xl text-xl text-white/60 sm:text-2xl"
         >
           {subtitle}
         </motion.p>
