@@ -72,7 +72,7 @@ export function LandingHero({ headline, subtitle, subline, industry, badge }: La
           {...motionProps(1)}
           className="text-5xl font-bold tracking-tight bg-clip-text text-transparent sm:text-6xl lg:text-7xl"
           style={{
-            backgroundImage: 'linear-gradient(to right, #2dd4bf 0%, white 20%, white 80%, #facc15 100%)',
+            backgroundImage: 'linear-gradient(to right, #2dd4bf 0%, white 30%, white 70%, #facc15 100%)',
           }}
         >
           {headline}
