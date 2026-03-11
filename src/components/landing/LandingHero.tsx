@@ -33,7 +33,7 @@ export function LandingHero({ headline, subtitle, subline, industry, badge }: La
     reducedMotion ? {} : stagger(index)
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
+    <div className="relative flex min-h-screen flex-col items-center px-6 pt-[12vh] text-center">
       <DiagonalShapes />
 
       <div className="relative z-10 flex max-w-3xl flex-col items-center gap-6">
