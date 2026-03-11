@@ -28,6 +28,10 @@ const bars: BarConfig[] = [
   { scale: 13, x: '76%',  y: '-12%', color: 'rgba(234,179,8,0.10)',   delay: 0.4, duration: 13 },
   { scale: 9,  x: '87%',  y: '32%',  color: 'rgba(20,184,166,0.12)',  delay: 0.6, duration: 10 },
   { scale: 6,  x: '68%',  y: '15%',  color: 'rgba(255,255,255,0.06)', delay: 0.8, duration: 12 },
+  // Bottom zone
+  { scale: 11, x: '5%',   y: '70%',  color: 'rgba(20,184,166,0.10)',  delay: 0.6, duration: 13 },
+  { scale: 8,  x: '42%',  y: '78%',  color: 'rgba(234,179,8,0.08)',   delay: 0.9, duration: 11 },
+  { scale: 12, x: '82%',  y: '65%',  color: 'rgba(255,255,255,0.06)', delay: 0.7, duration: 14 },
 ]
 
 export function DiagonalShapes() {
