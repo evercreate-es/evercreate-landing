@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface WaitlistFormProps {
   industry?: string
+  defaultOpen?: boolean
 }
 
-export function WaitlistForm({ industry }: WaitlistFormProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function WaitlistForm({ industry, defaultOpen = false }: WaitlistFormProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [shake, setShake] = useState(false)

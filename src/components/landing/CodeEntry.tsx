@@ -18,7 +18,7 @@ interface CodeEntryProps {
 }
 
 export function CodeEntry({ industry }: CodeEntryProps) {
-  const [state, setState] = useState<'initial' | 'input' | 'validated' | 'calendar'>('initial')
+  const [state, setState] = useState<'initial' | 'input' | 'waitlist' | 'validated' | 'calendar'>('initial')
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -121,7 +121,12 @@ export function CodeEntry({ industry }: CodeEntryProps) {
             >
               I have a code
             </button>
-            <WaitlistForm industry={industry} />
+            <button
+              onClick={() => setState('waitlist')}
+              className="text-sm text-white/40 hover:text-white/60 transition-colors cursor-pointer"
+            >
+              Join the waitlist
+            </button>
           </motion.div>
         )}
 
@@ -141,12 +146,12 @@ export function CodeEntry({ industry }: CodeEntryProps) {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 onKeyDown={handleKeyDown}
                 autoFocus
-                className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-teal-500 focus:shadow-[0_0_12px_rgba(20,184,166,0.2)] transition-all text-center tracking-wider font-mono uppercase"
+                className="rounded-xl bg-white border border-white px-5 py-3.5 text-base text-black placeholder-black/30 outline-none focus:shadow-[0_0_16px_rgba(20,184,166,0.3)] transition-all text-center tracking-wider font-mono uppercase"
               />
               <button
                 onClick={handleValidate}
                 disabled={loading}
-                className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition-all disabled:opacity-50 cursor-pointer hover:shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02]"
+                className="rounded-xl bg-teal-500 px-6 py-3.5 text-base font-semibold text-white transition-all disabled:opacity-50 cursor-pointer hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02]"
               >
                 {loading ? '...' : 'Go'}
               </button>
@@ -160,7 +165,17 @@ export function CodeEntry({ industry }: CodeEntryProps) {
                 {error}
               </motion.p>
             )}
-            <WaitlistForm industry={industry} />
+          </motion.div>
+        )}
+
+        {state === 'waitlist' && (
+          <motion.div
+            key="waitlist"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <WaitlistForm industry={industry} defaultOpen />
           </motion.div>
         )}
 
