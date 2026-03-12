@@ -4,8 +4,9 @@ import { LandingHero } from '@/components/landing/LandingHero'
 import {
   getAllIndustrySlugs,
   getIndustryBySlug,
+  buildTagline,
+  LANDING_BULLETS,
   LANDING_SUBLINE,
-  LANDING_SUBTITLE,
 } from '@/lib/landing/industries'
 
 export const dynamicParams = false
@@ -25,7 +26,7 @@ export async function generateMetadata({
 
   return {
     title: `Evercreate — ${industry.name}`,
-    description: `${industry.headline} ${LANDING_SUBTITLE}`,
+    description: `${industry.headline} ${LANDING_BULLETS.join('. ')}.`,
   }
 }
 
@@ -44,7 +45,8 @@ export default async function IndustryPage({
   return (
     <LandingHero
       headline={industry.headline}
-      subtitle={industry.subtitle}
+      tagline={buildTagline(industry.orgLabel)}
+      bullets={LANDING_BULLETS}
       subline={LANDING_SUBLINE}
       industry={industry.slug}
       badge={`Early Access for ${industry.badgeLabel} — Limited Spots`}

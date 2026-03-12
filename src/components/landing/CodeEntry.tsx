@@ -15,10 +15,16 @@ interface StoredCode {
 
 interface CodeEntryProps {
   industry?: string
+  onStateChange?: (state: 'input' | 'waitlist' | 'validated' | 'calendar') => void
 }
 
-export function CodeEntry({ industry }: CodeEntryProps) {
-  const [state, setState] = useState<'initial' | 'input' | 'waitlist' | 'validated' | 'calendar'>('initial')
+export function CodeEntry({ industry, onStateChange }: CodeEntryProps) {
+  const [state, _setState] = useState<'input' | 'waitlist' | 'validated' | 'calendar'>('input')
+
+  const setState = (next: typeof state) => {
+    _setState(next)
+    onStateChange?.(next)
+  }
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -30,12 +36,14 @@ export function CodeEntry({ industry }: CodeEntryProps) {
       if (stored) {
         const parsed: StoredCode = JSON.parse(stored)
         if (parsed.code && parsed.validatedAt) {
-          setState('calendar')
+          _setState('calendar')
+          onStateChange?.('calendar')
         }
       }
     } catch {
       // Ignore parse errors
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -101,61 +109,34 @@ export function CodeEntry({ industry }: CodeEntryProps) {
     }
   }
 
-  const calUrl = process.env.NEXT_PUBLIC_CALCOM_URL || ''
+  const calUrl = (process.env.NEXT_PUBLIC_CALCOM_URL || '').replace(/^https?:\/\/cal\.com\//, '')
 
   return (
     <div className="flex flex-col items-center gap-4">
       <AnimatePresence mode="wait">
-        {state === 'initial' && (
-          <motion.div
-            key="initial"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-3"
-          >
-            <button
-              onClick={() => setState('input')}
-              className="rounded-2xl bg-white px-10 py-4 text-lg font-medium text-black transition-all hover:shadow-[0_0_30px_rgba(20,184,166,0.4)] hover:scale-[1.04]"
-              style={{ cursor: 'pointer' }}
-            >
-              I have a code
-            </button>
-            <button
-              onClick={() => setState('waitlist')}
-              className="text-sm text-white/40 hover:text-white/60 transition-colors cursor-pointer"
-            >
-              Join the waitlist
-            </button>
-          </motion.div>
-        )}
-
         {state === 'input' && (
           <motion.div
             key="input"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={`flex flex-col items-center gap-3 ${shake ? 'animate-shake' : ''}`}
+            className={`flex flex-col items-center gap-4 ${shake ? 'animate-shake' : ''}`}
           >
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Enter your code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                onKeyDown={handleKeyDown}
-                autoFocus
-                className="rounded-xl bg-white border border-white px-5 py-3.5 text-base text-black placeholder-black/30 outline-none focus:shadow-[0_0_16px_rgba(20,184,166,0.3)] transition-all text-center tracking-wider font-mono uppercase"
-              />
-              <button
-                onClick={handleValidate}
-                disabled={loading}
-                className="rounded-xl bg-teal-500 px-6 py-3.5 text-base font-semibold text-white transition-all disabled:opacity-50 cursor-pointer hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02]"
-              >
-                {loading ? '...' : 'Go'}
-              </button>
-            </div>
+            <input
+              type="text"
+              placeholder="Enter your access code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
+              className="w-72 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-base text-white placeholder-white/30 outline-none focus:border-teal-500/50 focus:shadow-[0_0_16px_rgba(20,184,166,0.15)] transition-all text-center tracking-wider font-mono uppercase"
+            />
+            <button
+              onClick={handleValidate}
+              disabled={loading}
+              className="rounded-2xl bg-white px-10 py-4 text-lg font-medium text-black transition-all hover:shadow-[0_0_30px_rgba(20,184,166,0.4)] hover:scale-[1.04] disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? 'Validating...' : 'Redeem access'}
+            </button>
             {error && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -165,6 +146,12 @@ export function CodeEntry({ industry }: CodeEntryProps) {
                 {error}
               </motion.p>
             )}
+            <button
+              onClick={() => setState('waitlist')}
+              className="text-sm text-white/40 hover:text-white/60 transition-colors cursor-pointer"
+            >
+              Join the waitlist
+            </button>
           </motion.div>
         )}
 
@@ -197,7 +184,7 @@ export function CodeEntry({ industry }: CodeEntryProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-xl"
+            className="w-[min(100vw-3rem,900px)]"
           >
             <Cal
               calLink={calUrl}

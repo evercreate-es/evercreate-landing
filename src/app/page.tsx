@@ -1,17 +1,18 @@
 import type { Metadata } from 'next'
 import { LandingHero } from '@/components/landing/LandingHero'
-import { LANDING_SUBTITLE, LANDING_SUBLINE } from '@/lib/landing/industries'
+import { buildTagline, LANDING_BULLETS, LANDING_SUBLINE } from '@/lib/landing/industries'
 
 export const metadata: Metadata = {
-  title: 'Evercreate — Your custom platform, built for how your company actually works',
-  description: 'All the risk is on us. Your platform gets built with no cost, and you only pay a flat monthly fee if you use it. Cancel anytime.',
+  title: 'Evercreate — One custom platform that runs your entire operation',
+  description: LANDING_BULLETS.join('. ') + '.',
 }
 
 export default function HomePage() {
   return (
     <LandingHero
-      headline="Your custom platform, built for how your company actually works."
-      subtitle={LANDING_SUBTITLE}
+      headline="What if your company had its own software?"
+      tagline={buildTagline('company')}
+      bullets={LANDING_BULLETS}
       subline={LANDING_SUBLINE}
       industry={undefined}
       badge="Exclusive Early Access"
