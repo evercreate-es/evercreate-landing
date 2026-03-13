@@ -66,21 +66,44 @@ function getIndustrySlug(campaignName: string): string {
   return SLUG_MAP[raw] || raw
 }
 
-async function autoReplyInterested(data: Record<string, unknown>) {
+async function autoReplyInterested(data: Record<string, unknown>): Promise<'sent' | 'skipped' | 'failed'> {
   try {
     const leadEmail = (data.lead_email || data.email || '') as string
     const campaignName = (data.campaign_name || '') as string
     const slug = getIndustrySlug(campaignName)
 
-    if (!leadEmail || !slug) return false
+    if (!leadEmail || !slug) return 'failed'
 
-    // Find the latest email thread with this lead
+    // Check how many emails we've sent to this lead
+    // Only auto-reply if they responded to Email 1 (which has no calendar link)
+    const sentEmails = await instantlyGet(
+      `/emails?lead=${encodeURIComponent(leadEmail)}&email_type=sent&limit=10`
+    )
+    const sentCount = sentEmails?.items?.length || 0
+
+    // Save to Supabase regardless (for follow-up tracking)
+    const supabase = createServiceClient()
+    await supabase.from('interested_leads').upsert(
+      {
+        email: leadEmail.toLowerCase().trim(),
+        slug,
+        campaign_name: campaignName,
+        auto_replied_at: new Date().toISOString(),
+        followed_up: sentCount >= 2, // if they already got Email 2+, no follow-up needed
+      },
+      { onConflict: 'email' }
+    )
+
+    // If they've received 2+ emails, they already have the calendar link — skip auto-reply
+    if (sentCount >= 2) return 'skipped'
+
+    // Find the latest email thread to reply to
     const emails = await instantlyGet(
       `/emails?lead=${encodeURIComponent(leadEmail)}&email_type=received&limit=1&sort_order=desc`
     )
 
     const items = emails?.items || []
-    if (items.length === 0) return false
+    if (items.length === 0) return 'failed'
 
     const latestEmail = items[0]
     const emailId = latestEmail.id
@@ -88,7 +111,7 @@ async function autoReplyInterested(data: Record<string, unknown>) {
       || latestEmail.eaccount
       || latestEmail.to_address?.[0]?.email
 
-    if (!emailId || !senderAccount) return false
+    if (!emailId || !senderAccount) return 'failed'
 
     // Send auto-reply with calendar link
     const replyBody = [
@@ -110,27 +133,14 @@ async function autoReplyInterested(data: Record<string, unknown>) {
       eaccount: senderAccount,
       body: {
         html: replyBody,
-        text: replyBody.replace(/<br \/>/g, '\n').replace(/<\/?b>/g, ''),
+        text: replyBody.replace(/<br \/>/g, '\n').replace(/<a[^>]*>([^<]*)<\/a>/g, '$1').replace(/<\/?b>/g, ''),
       },
     })
 
-    // Save to Supabase for follow-up tracking
-    const supabase = createServiceClient()
-    await supabase.from('interested_leads').upsert(
-      {
-        email: leadEmail.toLowerCase().trim(),
-        slug,
-        campaign_name: campaignName,
-        auto_replied_at: new Date().toISOString(),
-        followed_up: false,
-      },
-      { onConflict: 'email' }
-    )
-
-    return true
+    return 'sent'
   } catch (err) {
     console.error('Auto-reply failed:', err)
-    return false
+    return 'failed'
   }
 }
 
@@ -206,7 +216,7 @@ function formatBounce(data: Record<string, unknown>) {
   ].filter(Boolean).join('\n')
 }
 
-function formatInterested(data: Record<string, unknown>, positive: boolean, autoReplied: boolean) {
+function formatInterested(data: Record<string, unknown>, positive: boolean, autoReplyResult: 'sent' | 'skipped' | 'failed' | 'none') {
   const lead = data.lead_email || data.email || 'Unknown'
   const company = data.lead_company_name || data.company_name || ''
   const campaign = data.campaign_name || ''
@@ -216,9 +226,11 @@ function formatInterested(data: Record<string, unknown>, positive: boolean, auto
     `From: <b>${lead}</b>${company ? ` (${company})` : ''}`,
     campaign ? `Campaign: ${campaign}` : '',
   ]
-  if (positive && autoReplied) {
+  if (positive && autoReplyResult === 'sent') {
     lines.push('', '✅ Auto-replied with calendar link')
-  } else if (positive && !autoReplied) {
+  } else if (positive && autoReplyResult === 'skipped') {
+    lines.push('', 'ℹ️ Already has calendar link (Email 2+) — no auto-reply')
+  } else if (positive && autoReplyResult === 'failed') {
     lines.push('', '⚠️ Auto-reply failed — reply manually!')
   }
   return lines.filter(Boolean).join('\n')
@@ -242,12 +254,12 @@ export async function POST(request: NextRequest) {
         message = formatBounce(data)
         break
       case 'lead_interested': {
-        const autoReplied = await autoReplyInterested(data)
-        message = formatInterested(data, true, autoReplied)
+        const result = await autoReplyInterested(data)
+        message = formatInterested(data, true, result)
         break
       }
       case 'lead_not_interested':
-        message = formatInterested(data, false, false)
+        message = formatInterested(data, false, 'none')
         break
       default:
         message = `<b>${eventType || 'Unknown event'}</b>\n${JSON.stringify(data).slice(0, 400)}`
